@@ -1,35 +1,19 @@
-const downloadExcel = () => {
-  // Fetch API data
-  fetch('https://api.example.com/data')
-    .then(response => response.json())
-    .then(data => {
-      // Select desired columns from API data
-      const selectedColumns = data.map(item => {
-        return {
-          id: item.id,
-          name: item.name,
-          // Add more properties as needed
-        };
-      });
+ const tableStyle = {
+        showHeaders: true,
+        theme: 'Table Style Light 1', // You can choose a different table style theme if desired
+      };
 
-      // Create a new workbook
-      const workbook = XLSX.utils.book_new();
-
-      // Convert the selectedColumns data to a worksheet
-      const worksheet = XLSX.utils.json_to_sheet(selectedColumns);
-
-      // Apply styles for header row
-      const headerStyle = { fill: { fgColor: { rgb: 'FFFF0000' } } };
-      XLSX.utils.sheet_add_json(worksheet, [selectedColumns[0]], { skipHeader: true, origin: 'A1' });
-      XLSX.utils.sheet_set_range_style(worksheet, 'A1', headerStyle);
-
-      // Apply styles for body rows
-      const bodyStyleEven = { fill: { fgColor: { rgb: 'FFC0C0C0' } } };
-      const bodyStyleOdd = { fill: { fgColor: { rgb: 'FFFFFFFF' } } };
-      for (let row = 1; row < selectedColumns.length; row++) {
-        const style = row % 2 === 0 ? bodyStyleEven : bodyStyleOdd;
-        XLSX.utils.sheet_set_range_style(worksheet, `A${row + 1}`, style);
+      // Apply custom styles to alternate rows in the table body
+      const bodyRange = XLSX.utils.decode_range(worksheet['!ref']);
+      for (let row = bodyRange.s.r + 1; row <= bodyRange.e.r; row += 2) {
+        const rowRange = XLSX.utils.encode_range({ s: { r: row, c: bodyRange.s.c }, e: { r: row, c: bodyRange.e.c } });
+        XLSX.utils.sheet_set_range_style(worksheet, rowRange, { fill: { fgColor: { rgb: 'F0F0F0' } } });
       }
+
+      // Format the worksheet as a table with header and body styles
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      const tableRange = XLSX.utils.encode_range(range);
+      XLSX.utils.sheet_add_table(worksheet, tableRange, tableStyle);
 
       // Add the worksheet to the workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
@@ -48,7 +32,3 @@ const downloadExcel = () => {
       // Save the file using FileSaver.js
       saveAs(blob, 'api_data.xlsx');
     })
-    .catch(error => {
-      console.error('Error:', error);
-    });
-};
