@@ -18,31 +18,44 @@ const downloadExcel = () => {
       // Convert the selectedColumns data to a worksheet
       const worksheet = XLSX.utils.json_to_sheet(selectedColumns);
 
-      // Apply custom styling for the header row
+      // Define cell styles for header and body
       const headerStyle = {
-        font: { bold: true },
-        fill: { fgColor: { rgb: 'CCCCCC' } }, // Customize the header fill color
+        fill: {
+          fgColor: { rgb: 'C0C0C0' }, // Light gray color
+        },
+        font: {
+          bold: true,
+        },
       };
+
+      const bodyStyle = {
+        fill: {
+          fgColor: { rgb: 'FFFFFF' }, // White color
+        },
+      };
+
+      // Set cell styles for the header row
       const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
       for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
         worksheet[cellRef].s = headerStyle;
       }
 
-      // Apply custom styling for the body rows
-      const bodyStyle = {
-        fill: { fgColor: { rgb: 'FFFFFF' } }, // Customize the body fill color
-      };
-      const bodyRange = XLSX.utils.decode_range(worksheet['!ref']);
-      for (let row = bodyRange.s.r + 1; row <= bodyRange.e.r; row++) {
-        for (let col = bodyRange.s.c; col <= bodyRange.e.c; col++) {
+      // Apply cell styles to the body rows
+      for (let row = headerRange.s.r + 1; row <= headerRange.e.r; row++) {
+        for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
           const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
           worksheet[cellRef].s = bodyStyle;
         }
       }
 
-      // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
+      // Define table formatting options
+      const tableOptions = {
+        showRowStripes: true,
+      };
+
+      // Add the worksheet to the workbook with table formatting
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1', tableOptions);
 
       // Convert the workbook to an Excel file buffer
       const excelBuffer = XLSX.write(workbook, {
