@@ -18,20 +18,14 @@ const downloadExcel = () => {
       // Convert the selectedColumns data to a worksheet
       const worksheet = XLSX.utils.json_to_sheet(selectedColumns);
 
-      // Define cell styles for header and body
+      // Define cell styles for table header and body
       const headerStyle = {
-        fill: {
-          fgColor: { rgb: 'C0C0C0' }, // Light gray color
-        },
-        font: {
-          bold: true,
-        },
+        fill: { fgColor: { rgb: 'C0C0C0' } }, // Light gray color
+        font: { bold: true },
       };
 
       const bodyStyle = {
-        fill: {
-          fgColor: { rgb: 'FFFFFF' }, // White color
-        },
+        fill: { fgColor: { rgb: 'FFFFFF' } }, // White color
       };
 
       // Set cell styles for the header row
@@ -49,18 +43,13 @@ const downloadExcel = () => {
         }
       }
 
-      // Define table formatting options
-      const tableOptions = {
-        showRowStripes: true,
-      };
-
-      // Add the worksheet to the workbook with table formatting
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1', tableOptions);
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
 
       // Convert the workbook to an Excel file buffer
       const excelBuffer = XLSX.write(workbook, {
         bookType: 'xlsx',
-        type: 'array',
+        type: 'buffer',
       });
 
       // Create a Blob from the buffer
