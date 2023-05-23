@@ -1,10 +1,10 @@
-const downloadTable = () => {
+const downloadExcel = () => {
   // Fetch API data
   fetch('https://api.example.com/data')
     .then(response => response.json())
     .then(data => {
-      // Format data for the table
-      const formattedData = data.map(item => {
+      // Select desired columns from API data
+      const selectedColumns = data.map(item => {
         return {
           id: item.id,
           name: item.name,
@@ -15,19 +15,31 @@ const downloadTable = () => {
       // Create a new workbook
       const workbook = XLSX.utils.book_new();
 
-      // Convert the formattedData to a worksheet
-      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+      // Convert the selectedColumns data to a worksheet
+      const worksheet = XLSX.utils.json_to_sheet(selectedColumns);
 
-      // Customize the table style
-      const tableStyle = {
-        showHeaders: true,
-        theme: 'Table Style Light 1', // Choose a desired table style theme
+      // Apply custom styling for the header row
+      const headerStyle = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: 'CCCCCC' } }, // Customize the header fill color
       };
+      const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
+      for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        worksheet[cellRef].s = headerStyle;
+      }
 
-      // Add the table to the worksheet
-      const range = XLSX.utils.decode_range(worksheet['!ref']);
-      const tableRange = XLSX.utils.encode_range(range);
-      XLSX.utils.sheet_add_table(worksheet, tableRange, tableStyle);
+      // Apply custom styling for the body rows
+      const bodyStyle = {
+        fill: { fgColor: { rgb: 'FFFFFF' } }, // Customize the body fill color
+      };
+      const bodyRange = XLSX.utils.decode_range(worksheet['!ref']);
+      for (let row = bodyRange.s.r + 1; row <= bodyRange.e.r; row++) {
+        for (let col = bodyRange.s.c; col <= bodyRange.e.c; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+          worksheet[cellRef].s = bodyStyle;
+        }
+      }
 
       // Add the worksheet to the workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
@@ -44,7 +56,7 @@ const downloadTable = () => {
       });
 
       // Save the file using FileSaver.js
-      saveAs(blob, 'table_data.xlsx');
+      saveAs(blob, 'api_data.xlsx');
     })
     .catch(error => {
       console.error('Error:', error);
