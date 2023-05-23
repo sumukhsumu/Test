@@ -1,59 +1,42 @@
-import React from 'react';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-
 const downloadExcel = () => {
-  // Create a new workbook
-  const workbook = new ExcelJS.Workbook();
+  // Fetch API data
+  fetch('https://api.example.com/data')
+    .then(response => response.json())
+    .then(data => {
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
 
-  // Add a worksheet to the workbook
-  const worksheet = workbook.addWorksheet('Sheet 1');
+      // Add a worksheet to the workbook
+      const worksheet = workbook.addWorksheet('Sheet 1');
 
-  // Define your table data (example)
-  const tableData = [
-    ['Header 1', 'Header 2', 'Header 3'],
-    ['Value 1', 'Value 2', 'Value 3'],
-    ['Value 4', 'Value 5', 'Value 6'],
-  ];
+      // Define the header row and column names
+      const headers = ['ID', 'Name', 'Email'];
+      
+      // Set the header row in the worksheet
+      worksheet.addRow(headers);
 
-  // Set the header row
-  const headerRow = worksheet.addRow(tableData[0]);
-  headerRow.font = { bold: true };
+      // Add data from the API to the worksheet
+      data.forEach(item => {
+        const row = worksheet.addRow([item.id, item.name, item.email]);
+        // Customize the row if needed, e.g., add cell formatting, styles, etc.
+      });
 
-  // Add the remaining data rows
-  for (let i = 1; i < tableData.length; i++) {
-    worksheet.addRow(tableData[i]);
-  }
+      // Auto-fit columns in the worksheet
+      worksheet.columns.forEach(column => {
+        column.width = Math.max(column.header.length, ...column.values.map(cell => (cell ? cell.toString().length : 0))) + 2;
+      });
 
-  // Auto-fit column widths
-  worksheet.columns.forEach(column => {
-    column.width = 15;
-  });
+      // Generate the Excel file buffer
+      return workbook.xlsx.writeBuffer();
+    })
+    .then(buffer => {
+      // Create a Blob from the buffer
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-  // Apply styles to the table
-  worksheet.eachRow({ includeEmpty: true }, row => {
-    row.eachCell(cell => {
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' },
-      };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-
-      if (row.number % 2 === 0) {
-        // Apply alternate row color
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F0F0F0' } };
-      }
+      // Save the file using FileSaver.js
+      saveAs(blob, 'api_data.xlsx');
+    })
+    .catch(error => {
+      console.error('Error:', error);
     });
-  });
-
-  // Generate an Excel buffer
-  workbook.xlsx.writeBuffer().then(buffer => {
-    // Create a Blob from the buffer
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-    // Save the file using FileSaver.js
-    saveAs(blob, 'customized_table.xlsx');
-  });
 };
