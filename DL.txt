@@ -1,34 +1,59 @@
- const tableStyle = {
-        showHeaders: true,
-        theme: 'Table Style Light 1', // You can choose a different table style theme if desired
+import React from 'react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+
+const downloadExcel = () => {
+  // Create a new workbook
+  const workbook = new ExcelJS.Workbook();
+
+  // Add a worksheet to the workbook
+  const worksheet = workbook.addWorksheet('Sheet 1');
+
+  // Define your table data (example)
+  const tableData = [
+    ['Header 1', 'Header 2', 'Header 3'],
+    ['Value 1', 'Value 2', 'Value 3'],
+    ['Value 4', 'Value 5', 'Value 6'],
+  ];
+
+  // Set the header row
+  const headerRow = worksheet.addRow(tableData[0]);
+  headerRow.font = { bold: true };
+
+  // Add the remaining data rows
+  for (let i = 1; i < tableData.length; i++) {
+    worksheet.addRow(tableData[i]);
+  }
+
+  // Auto-fit column widths
+  worksheet.columns.forEach(column => {
+    column.width = 15;
+  });
+
+  // Apply styles to the table
+  worksheet.eachRow({ includeEmpty: true }, row => {
+    row.eachCell(cell => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
       };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-      // Apply custom styles to alternate rows in the table body
-      const bodyRange = XLSX.utils.decode_range(worksheet['!ref']);
-      for (let row = bodyRange.s.r + 1; row <= bodyRange.e.r; row += 2) {
-        const rowRange = XLSX.utils.encode_range({ s: { r: row, c: bodyRange.s.c }, e: { r: row, c: bodyRange.e.c } });
-        XLSX.utils.sheet_set_range_style(worksheet, rowRange, { fill: { fgColor: { rgb: 'F0F0F0' } } });
+      if (row.number % 2 === 0) {
+        // Apply alternate row color
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F0F0F0' } };
       }
+    });
+  });
 
-      // Format the worksheet as a table with header and body styles
-      const range = XLSX.utils.decode_range(worksheet['!ref']);
-      const tableRange = XLSX.utils.encode_range(range);
-      XLSX.utils.sheet_add_table(worksheet, tableRange, tableStyle);
+  // Generate an Excel buffer
+  workbook.xlsx.writeBuffer().then(buffer => {
+    // Create a Blob from the buffer
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-      // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
-
-      // Convert the workbook to an Excel file buffer
-      const excelBuffer = XLSX.write(workbook, {
-        bookType: 'xlsx',
-        type: 'array',
-      });
-
-      // Create a Blob from the buffer
-      const blob = new Blob([excelBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-
-      // Save the file using FileSaver.js
-      saveAs(blob, 'api_data.xlsx');
-    })
+    // Save the file using FileSaver.js
+    saveAs(blob, 'customized_table.xlsx');
+  });
+};
