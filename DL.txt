@@ -1,40 +1,50 @@
-const downloadExcel = () => {
+const downloadTable = () => {
   // Fetch API data
   fetch('https://api.example.com/data')
     .then(response => response.json())
     .then(data => {
+      // Format data for the table
+      const formattedData = data.map(item => {
+        return {
+          id: item.id,
+          name: item.name,
+          // Add more properties as needed
+        };
+      });
+
       // Create a new workbook
-      const workbook = new ExcelJS.Workbook();
+      const workbook = XLSX.utils.book_new();
 
-      // Add a worksheet to the workbook
-      const worksheet = workbook.addWorksheet('Sheet 1');
+      // Convert the formattedData to a worksheet
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
 
-      // Define the header row and column names
-      const headers = ['ID', 'Name', 'Email'];
-      
-      // Set the header row in the worksheet
-      worksheet.addRow(headers);
+      // Customize the table style
+      const tableStyle = {
+        showHeaders: true,
+        theme: 'Table Style Light 1', // Choose a desired table style theme
+      };
 
-      // Add data from the API to the worksheet
-      data.forEach(item => {
-        const row = worksheet.addRow([item.id, item.name, item.email]);
-        // Customize the row if needed, e.g., add cell formatting, styles, etc.
+      // Add the table to the worksheet
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      const tableRange = XLSX.utils.encode_range(range);
+      XLSX.utils.sheet_add_table(worksheet, tableRange, tableStyle);
+
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
+
+      // Convert the workbook to an Excel file buffer
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
       });
 
-      // Auto-fit columns in the worksheet
-      worksheet.columns.forEach(column => {
-        column.width = Math.max(column.header.length, ...column.values.map(cell => (cell ? cell.toString().length : 0))) + 2;
-      });
-
-      // Generate the Excel file buffer
-      return workbook.xlsx.writeBuffer();
-    })
-    .then(buffer => {
       // Create a Blob from the buffer
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
 
       // Save the file using FileSaver.js
-      saveAs(blob, 'api_data.xlsx');
+      saveAs(blob, 'table_data.xlsx');
     })
     .catch(error => {
       console.error('Error:', error);
