@@ -1,34 +1,53 @@
- const bodyStyle = {};
+// Import required modules
+const XLSX = require('xlsx');
 
-  // Set cell styles for the header row
-  const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
-  for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-    const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-    worksheet[cellRef].s = headerStyle;
+// Sample data
+const data = [
+  ['Name', 'Age', 'Email'],
+  ['John Doe', 25, 'johndoe@example.com'],
+  ['Jane Smith', 30, 'janesmith@example.com'],
+  ['Bob Johnson', 35, 'bobjohnson@example.com']
+];
+
+// Create a new workbook and worksheet
+const workbook = XLSX.utils.book_new();
+const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+// Define header style
+const headerStyle = {
+  font: {
+    bold: true,
+    color: { rgb: 'FFFFFF' }, // White color
+  },
+  fill: {
+    fgColor: { rgb: '2F75B5' }, // Blue color
   }
-
-  // Apply cell styles to the body rows
-  for (let row = headerRange.s.r + 1; row <= headerRange.e.r; row++) {
-    for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-      const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-      worksheet[cellRef].s = bodyStyle;
-    }
-  }
-
-  // Add the worksheet to the workbook
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
-
-  // Convert the workbook to an Excel file buffer
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: 'xlsx',
-    type: 'array',
-  });
-
-  // Create a Blob from the buffer
-  const blob = new Blob([excelBuffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-
-  // Save the file using FileSaver.js
-  saveAs(blob, 'data.xlsx');
 };
+
+// Apply header style to the first row
+const headerRange = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: 0, c: data[0].length - 1 } });
+worksheet[headerRange].s = headerStyle;
+
+// Define body style
+const bodyStyle = {
+  font: {
+    bold: false,
+    color: { rgb: '000000' }, // Black color
+  },
+  fill: {
+    fgColor: { rgb: 'FFFFFF' }, // White color
+  }
+};
+
+// Apply body style to all other rows
+const bodyRange = XLSX.utils.encode_range({ s: { r: 1, c: 0 }, e: { r: data.length - 1, c: data[0].length - 1 } });
+worksheet[bodyRange].s = bodyStyle;
+
+// Add the worksheet to the workbook
+XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+// Generate the Excel file
+const excelFileName = 'data.xlsx';
+XLSX.writeFile(workbook, excelFileName);
+
+console.log(`Data exported to ${excelFileName}`);
