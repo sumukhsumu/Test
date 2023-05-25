@@ -1,48 +1,34 @@
-import React from 'react';
-import { PDFDownloadLink, Document, Page, Text } from '@react-pdf/renderer';
-import { saveAs } from 'file-saver';
+ const bodyStyle = {};
 
-const SelectedData = ({ data }) => {
-  return (
-    <Document>
-      <Page>
-        {data.map(item => (
-          <Text key={item.id}>{item.name}</Text>
-        ))}
-      </Page>
-    </Document>
-  );
+  // Set cell styles for the header row
+  const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
+  for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+    const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+    worksheet[cellRef].s = headerStyle;
+  }
+
+  // Apply cell styles to the body rows
+  for (let row = headerRange.s.r + 1; row <= headerRange.e.r; row++) {
+    for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+      worksheet[cellRef].s = bodyStyle;
+    }
+  }
+
+  // Add the worksheet to the workbook
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
+
+  // Convert the workbook to an Excel file buffer
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: 'xlsx',
+    type: 'array',
+  });
+
+  // Create a Blob from the buffer
+  const blob = new Blob([excelBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+
+  // Save the file using FileSaver.js
+  saveAs(blob, 'data.xlsx');
 };
-
-const DownloadPDF = ({ data }) => {
-  const handleDownload = () => {
-    const pdfBlob = (
-      <PDFDownloadLink document={<SelectedData data={data} />} fileName="selected_data.pdf">
-        {({ blob }) => {
-          saveAs(blob, 'selected_data.pdf');
-        }}
-      </PDFDownloadLink>
-    );
-
-    pdfBlob.toBlob();
-  };
-
-  return <button onClick={handleDownload}>Download PDF</button>;
-};
-
-const App = () => {
-  const selectedData = [
-    { id: 1, name: 'Item 1' },
-    { id: 2, name: 'Item 2' },
-    { id: 3, name: 'Item 3' },
-  ];
-
-  return (
-    <div>
-      <DownloadPDF data={selectedData} />
-    </div>
-  );
-};
-
-export default App;
-
