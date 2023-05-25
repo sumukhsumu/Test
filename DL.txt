@@ -1,66 +1,48 @@
-const downloadExcel = () => {
-  // Fetch API data
-  fetch('https://api.example.com/data')
-    .then(response => response.json())
-    .then(data => {
-      // Select desired columns from API data
-      const selectedColumns = data.map(item => {
-        return {
-          id: item.id,
-          name: item.name,
-          // Add more properties as needed
-        };
-      });
+import React from 'react';
+import { PDFDownloadLink, Document, Page, Text } from '@react-pdf/renderer';
+import { saveAs } from 'file-saver';
 
-      // Create a new workbook
-      const workbook = XLSX.utils.book_new();
-
-      // Convert the selectedColumns data to a worksheet
-      const worksheet = XLSX.utils.json_to_sheet(selectedColumns);
-
-      // Define cell styles for table header and body
-      const headerStyle = {
-        fill: { fgColor: { rgb: 'C0C0C0' } }, // Light gray color
-        font: { bold: true },
-      };
-
-      const bodyStyle = {
-        fill: { fgColor: { rgb: 'FFFFFF' } }, // White color
-      };
-
-      // Set cell styles for the header row
-      const headerRange = XLSX.utils.decode_range(worksheet['!ref']);
-      for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
-        worksheet[cellRef].s = headerStyle;
-      }
-
-      // Apply cell styles to the body rows
-      for (let row = headerRange.s.r + 1; row <= headerRange.e.r; row++) {
-        for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-          const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
-          worksheet[cellRef].s = bodyStyle;
-        }
-      }
-
-      // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
-
-      // Convert the workbook to an Excel file buffer
-      const excelBuffer = XLSX.write(workbook, {
-        bookType: 'xlsx',
-        type: 'buffer',
-      });
-
-      // Create a Blob from the buffer
-      const blob = new Blob([excelBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-
-      // Save the file using FileSaver.js
-      saveAs(blob, 'api_data.xlsx');
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    });
+const SelectedData = ({ data }) => {
+  return (
+    <Document>
+      <Page>
+        {data.map(item => (
+          <Text key={item.id}>{item.name}</Text>
+        ))}
+      </Page>
+    </Document>
+  );
 };
+
+const DownloadPDF = ({ data }) => {
+  const handleDownload = () => {
+    const pdfBlob = (
+      <PDFDownloadLink document={<SelectedData data={data} />} fileName="selected_data.pdf">
+        {({ blob }) => {
+          saveAs(blob, 'selected_data.pdf');
+        }}
+      </PDFDownloadLink>
+    );
+
+    pdfBlob.toBlob();
+  };
+
+  return <button onClick={handleDownload}>Download PDF</button>;
+};
+
+const App = () => {
+  const selectedData = [
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' },
+    { id: 3, name: 'Item 3' },
+  ];
+
+  return (
+    <div>
+      <DownloadPDF data={selectedData} />
+    </div>
+  );
+};
+
+export default App;
+
